@@ -8,6 +8,22 @@ import { unicodeMapping } from './emoji_unicode_mapping_light';
 
 const trie = new Trie(Object.keys(unicodeMapping));
 
+// Validate and sanitize custom emoji URLs to prevent XSS
+const sanitizeCustomEmojiUrl = (url) => {
+  try {
+    const u = new URL(url, window.location.origin);
+    if (
+      u.protocol === 'https:' &&
+      (assetHost
+        ? new URL(assetHost).host === u.host
+        : u.host === window.location.host)
+    ) {
+      return u.href;
+    }
+  } catch {}
+  return '';
+};
+
 // Convert to file names from emojis. (For different variation selector emojis)
 const emojiFilenames = (emojis) => {
   return emojis.map(v => unicodeMapping[v].filename);
@@ -76,15 +92,18 @@ const emojifyTextNode = (node, customEmojis) => {
 
       // now got a replacee as ':shortcode:'
       // if you want additional emoji handler, add statements below which set replacement and return true.
-      const filename = autoPlayGif ? custom_emoji.url : custom_emoji.static_url;
+      const rawUrl = autoPlayGif ? custom_emoji.url : custom_emoji.static_url;
+      const filename = sanitizeCustomEmojiUrl(rawUrl);
+      if (!filename) { i = rend; continue; }
+
       replacement = document.createElement('img');
       replacement.setAttribute('draggable', 'false');
       replacement.setAttribute('class', 'emojione custom-emoji');
       replacement.setAttribute('alt', shortcode);
       replacement.setAttribute('title', shortcode);
       replacement.setAttribute('src', filename);
-      replacement.setAttribute('data-original', custom_emoji.url);
-      replacement.setAttribute('data-static', custom_emoji.static_url);
+      replacement.setAttribute('data-original', sanitizeCustomEmojiUrl(custom_emoji.url));
+      replacement.setAttribute('data-static', sanitizeCustomEmojiUrl(custom_emoji.static_url));
     } else { // start of an unicode emoji
       rend = i + unicode_emoji.length;
 
