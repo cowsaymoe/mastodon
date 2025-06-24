@@ -42,6 +42,11 @@ const addAutoPlay = html => {
   const iframe = document.querySelector('iframe');
 
   if (iframe) {
+    const src = iframe.src || '';
+    if (src.trim().toLowerCase().startsWith('javascript:')) {
+      iframe.parentNode.removeChild(iframe);
+      return document.querySelector('body').innerHTML;
+    }
     if (iframe.src.indexOf('?') !== -1) {
       iframe.src += '&';
     } else {
