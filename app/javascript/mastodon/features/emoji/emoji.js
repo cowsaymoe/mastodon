@@ -20,7 +20,9 @@ const sanitizeCustomEmojiUrl = (url) => {
     ) {
       return u.href;
     }
-  } catch {}
+  } catch (error) {
+    console.error('Failed to sanitize custom emoji URL:', url, error);
+  }
   return '';
 };
 
