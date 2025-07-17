@@ -20,7 +20,12 @@ class Api::V1::AppsController < Api::BaseController
   end
 
   def app_scopes_or_default
-    app_params[:scopes] || Doorkeeper.configuration.default_scopes
+    requested = app_params[:scopes]
+    return Doorkeeper.configuration.default_scopes unless requested.present?
+    allowed = Doorkeeper.configuration.scopes
+    valid = requested.split(' ')
+    filtered = valid.select { |s| allowed.exists?(s) }
+    filtered.any? ? filtered.join(' ') : Doorkeeper.configuration.default_scopes
   end
 
   def app_params
